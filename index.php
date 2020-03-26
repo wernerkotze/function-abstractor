@@ -2,8 +2,59 @@
     // errors
     $errors = [];
 
-    // post
-    if(isset($_POST["submit"])) {
+    // post 
+    if (isset($_POST['success'])) {
+        $function = getFunction($_POST['function']);
+        echo json_encode($function);
+    }
+
+    function getFunction($code) {
+
+        $functions = [
+            'get_factors'    => "
+                acl('get_factors');
+            ",
+            'collect_factor' => "
+                acl('collect_factor', [
+                    'factorgroup' => '',
+                    'factorname'  => '',
+                    'factorvalue' => ''
+                ]);
+            ",
+            'get_records' => "
+                acl('get_records');
+            ",
+            'collect_record' => "
+                acl('collect_record', [
+                    'code' => ''
+                ]);
+            ",
+            'get_variable' => "
+                acl('get_variable', [
+                    'level' => 'session',
+                    'name'  => 'greeting'
+                ]);
+            ",
+            'set_variable' => "
+                acl('set_variable', [
+                    'level' => 'session',
+                    'name'  => 'greeting',
+                    'value' => 'Hello World'
+                ]);
+            ",
+            'whoami' => "
+                acl('whoami');
+            ",
+            'get_session' => "
+                acl('get_session');
+            ",
+        ];
+
+        if ($functions[$code]) {
+            return $functions[$code];
+        } else {
+            return 'not found';
+        }
 
     }
 
@@ -40,7 +91,7 @@
                         dismissible
                         type="success"
                         >
-                        Folder Path Successfully Created!
+                        Function Found!
                     </v-alert>
                     <v-card class="elevation-12">
                     <v-toolbar color="light-blue">
@@ -94,40 +145,28 @@
       vuetify: new Vuetify(),
         data: () => ({
             valid: false,
-            path: '',
-            pathRules: [
-                v => !!v || 'Folder Path is required',
-                v => v.length <= 30 || 'Path must be less than 30 characters'
-            ],
             output: '',
             alert_error: null,
             alert_success: null,
             items: [
-                {name: "Property Group", value: "propertygroup"},
-                {name: "Product", value: "product"},
-                {name: "Account", value: "account"},
-                {name: "Process", value: "process_folder"},
-                {name: "Department", value: "user"}
+                {name: "Get Factors", value: "get_factors"},
+                {name: "Collect Factor", value: "collect_factor"},
+                {name: "Get Records", value: "get_record"},
+                {name: "Collect Record", value: "collect_record"},
+                {name: "Get User Information", value: "whoami"}
             ],
-            select: {name: "Property Group", value: "propertygroup"},
-            radios_create: 'true',
-            radios_delimeter: 'false',
+            select: {name: "Get Factors", value: "get_factors"},
+            radios_create: true,
         }),
         methods: {
             submit () {
                 var me = this;
                 var params = new URLSearchParams();
-                if (me.select.value === 'user') {
-                    me.select.value = null;
-                    params.append('classtype', 'object');
-                }
-                params.append('path', me.path);
-                params.append('itemtype', me.select.value);
-                params.append('create', me.radios_create);
-                params.append('delimeter', me.radios_delimeter);
-                axios.post(API + '/admin/folder/save', params)
+                params.append('function', me.select.value);
+                params.append('success', me.radios_create);
+                axios.post('http://our.local.test/function-abstractor/index.php', params)
                     .then(response => {
-                    me.output = me.path;
+                    me.output = response.data;
                     me.alert_success = true;
                     console.log(response);
                     })
